@@ -7,6 +7,7 @@ var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID */ 
 var allVals = [];
 var idPool = [];
+setTimeout(retrieveFromBackend(), 5*1000);
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
                 allVals = [];
@@ -16,7 +17,6 @@ function reset() {
 function retrieveFromBackend() {
 	$.post("/updateClient/", function( data ) {
 		var obj = JSON.parse(data);
-		console.log(obj);
 		for (var i in obj) {
 			allVals[i] = obj[i];
 		}
@@ -24,11 +24,12 @@ function retrieveFromBackend() {
 	});
 }
 function sendToBackend() {
-	console.log(allVals);
 	$.post("/updateServer/", JSON.stringify(allVals));
 }
 function drawGrid() {
-        visible = document.getElementById("visible")
+	/* This doesn't really belong here, more of a convenience feature */
+	sendToBackend();
+        visible = document.getElementById("visible");
         /* Removes all elements from #visible aside from the header */
         while (visible.childNodes.length > 2) {
                 visible.removeChild(visible.lastChild);
