@@ -3,11 +3,18 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/go-redis/redis"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 )
+
+var client = redis.NewClient(&redis.Options{
+	Addr:     "localhost:6379",
+	Password: "",
+	DB:       0,
+})
 
 type Meter struct {
 	Name    string
@@ -41,36 +48,20 @@ func retrieveFromClientHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 		return
 	}
+	err = client.Set("data", b, 0).Err()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
 }
 
 func serverResponseHandler(w http.ResponseWriter, r *http.Request) {
-	payload := []Meter{}
-	kusu := Meter{
-		Name:    "Kusuda",
-		Gain:    7,
-		Current: 0,
-		Id:      0,
-		Visible: true,
+	str, err := client.Get("data").Result()
+	if err != nil {
+		http.Error(w, err.Error(), 500)
 	}
-	ajoke := Meter{
-		Name:    "Ajoke",
-		Gain:    6,
-		Current: 22,
-		Id:      1,
-		Visible: true,
-	}
-	sophia := Meter{
-		Name:    "Sophia",
-		Gain:    6,
-		Current: -55,
-		Id:      2,
-		Visible: true,
-	}
-	payload = append(payload, kusu)
-	payload = append(payload, ajoke)
-	payload = append(payload, sophia)
-	sent, _ := json.Marshal(payload)
-	_, err := fmt.Fprint(w, string(sent))
+
+	_, err := fmt.Fprint(w, str)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 	}
@@ -82,5 +73,5 @@ func main() {
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/updateClient/", serverResponseHandler)
 	http.HandleFunc("/updateServer/", retrieveFromClientHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":80", nil))
 }
