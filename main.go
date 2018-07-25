@@ -61,7 +61,7 @@ func serverResponseHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 500)
 	}
 
-	_, err := fmt.Fprint(w, str)
+	_, err = fmt.Fprint(w, str)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 	}
