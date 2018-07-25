@@ -5,17 +5,27 @@
  */
 var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID */ 
-var allVals = [
-        ['Kusuda', 7, 0, 0, true],
-        ['Ajoke',  6, 0, 1, true],
-        ['Sophia', 6, 0, 2, true]
-];
+var allVals = [];
 var idPool = [];
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
                 allVals = [];
                 drawGrid();
         }
+}
+function retrieveFromBackend() {
+	$.post("/updateClient/", function( data ) {
+		var obj = JSON.parse(data);
+		console.log(obj);
+		for (var i in obj) {
+			allVals[i] = obj[i];
+		}
+		drawGrid();
+	});
+}
+function sendToBackend() {
+	console.log(allVals);
+	$.post("/updateServer/", JSON.stringify(allVals));
 }
 function drawGrid() {
         visible = document.getElementById("visible")
@@ -30,10 +40,10 @@ function drawGrid() {
 function timer() {
         while (!paused && allVals.length != 0) {
                 for (var i in allVals) {
-                        if (Number(allVals[i][2]) >= 100) {
+                        if (Number(allVals[i].Current) >= 100) {
                                 paused = true;
                         }
-                        allVals[i][2] += allVals[i][1];
+                        allVals[i].Current += allVals[i].Gain;
                 }
                 drawGrid();
         }
@@ -45,10 +55,10 @@ function getCurrentTable(visible) {
                 return document.getElementById("invisible");
         }
 }
-function appendList(currArray, visible) {
-        var name = currArray[0];
-        var gain = currArray[1];
-        var curr = currArray[2];
+function appendList(currObj, visible) {
+        var name = currObj.Name;
+        var gain = currObj.Gain;
+        var curr = currObj.Current;
         /*
          * Feels weird creating so many variables just to discard them
          * I don't think there's a better method of doing this though.
@@ -101,7 +111,7 @@ function appendList(currArray, visible) {
         var hiddInput = document.createElement("input");
         hiddInput.type  = "hidden";
         hiddInput.name  = "id";
-        hiddInput.value = currArray[3];
+        hiddInput.value = currObj.Id;
         opt_element.appendChild(hiddInput);
 
         var delete_button = document.createElement("input");
@@ -110,9 +120,9 @@ function appendList(currArray, visible) {
         delete_button.value   = "Delete";
         delete_button.onclick = function() { 
                                                 for (var i in allVals) {
-                                                        if (allVals[i][3] == currArray[3]) {
+                                                        if (allVals[i].Id == currObj.Id) {
                                                                 allVals.splice(i, 1);
-								idPool.push(currArray[3]);
+								idPool.push(currObj.Id);
 								idPool.sort(function(a,b){return b - a});
                                                         }
                                                 }
@@ -124,8 +134,8 @@ function appendList(currArray, visible) {
         zero_button.value   = "Zero Out Meter";
         zero_button.onclick = function () {
                                                 for (var i in allVals) {
-                                                        if (allVals[i][3] == currArray[3]) {
-                                                                allVals[i][2] = 0;
+                                                        if (allVals[i].Id == currObj.Id) {
+                                                                allVals[i].Current = 0;
                                                         }
                                                 }
                                                 drawGrid();
@@ -137,8 +147,8 @@ function appendList(currArray, visible) {
         rest_button.value   = "Rest";
         rest_button.onclick = function () {
                                                 for (var i in allVals) {
-                                                        if (allVals[i][3] == currArray[3]) {
-                                                                allVals[i][2] = 25;
+                                                        if (allVals[i].Id == currObj.Id) {
+                                                                allVals[i].Current = 25;
                                                         }
                                                 }
                                                 drawGrid();
@@ -163,6 +173,8 @@ $(document).ready(function() {
                 /*
                  * Make sure to secure this against XSS attacks
                  * Probably just HTML / JS encode data before doing anything with it
+		 *
+		 * I could probably skip one of these steps
                  */
                 var newList = $( this ).serializeArray();
                 var arrayList = [];
@@ -183,7 +195,8 @@ $(document).ready(function() {
 		} else {
 			arrayList.push(allVals.length);
 		}
-                allVals.push(arrayList);
+		var tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: arrayList[3]}
+                allVals.push(tempObj);
                 drawGrid();
                 event.preventDefault();
         });
@@ -193,14 +206,14 @@ $(document).ready(function() {
                 var siblings = $(this).parent().parent().find("input");
                 var id = siblings[3].value;
                 for (var i in allVals) {
-                        if (allVals[i][3] == id) {
-                                allVals[i][0] = siblings[0].value;
-                                allVals[i][1] = Number(siblings[1].value);
-                                allVals[i][2] = Number(siblings[2].value);
+                        if (allVals[i].Id == id) {
+                                allVals[i].Name    = siblings[0].value;
+                                allVals[i].Gain    = Number(siblings[1].value);
+                                allVals[i].Current = Number(siblings[2].value);
                         }
                 }
                 drawGrid();
         });
 
-        drawGrid();
+	retrieveFromBackend();
 });
