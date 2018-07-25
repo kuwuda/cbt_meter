@@ -9,6 +9,7 @@ var allVals = [
         ['Ajoke',  6, 0, 1],
         ['Sophia', 6, 0, 2]
 ];
+var idPool = [];
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
                 allVals = [];
@@ -110,6 +111,8 @@ function appendList(currArray, visible) {
                                                 for (var i in allVals) {
                                                         if (allVals[i][3] == currArray[3]) {
                                                                 allVals.splice(i, 1);
+								idPool.push(currArray[3]);
+								idPool.sort(function(a,b){return b - a});
                                                         }
                                                 }
                                                 drawGrid();
@@ -174,7 +177,11 @@ $(document).ready(function() {
                         }
 
                 }
-                arrayList.push(20);
+		if (idPool.length > 0) {
+               		arrayList.push(idPool.pop());
+		} else {
+			arrayList.push(allVals.length);
+		}
                 allVals.push(arrayList);
                 drawGrid();
                 event.preventDefault();
@@ -196,4 +203,3 @@ $(document).ready(function() {
 
         drawGrid();
 });
-
