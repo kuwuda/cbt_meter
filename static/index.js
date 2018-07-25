@@ -7,19 +7,17 @@ var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID */ 
 var allVals = [];
 var idPool = [];
-setTimeout(retrieveFromBackend(), 5*1000);
+setInterval(retrieveFromBackend(), 5*1000);
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
                 allVals = [];
+		sendToBackend()
                 drawGrid();
         }
 }
 function retrieveFromBackend() {
 	$.post("/updateClient/", function( data ) {
-		var obj = JSON.parse(data);
-		for (var i in obj) {
-			allVals[i] = obj[i];
-		}
+		allVals = JSON.parse(data);
 		drawGrid();
 	});
 }
@@ -28,7 +26,6 @@ function sendToBackend() {
 }
 function drawGrid() {
 	/* This doesn't really belong here, more of a convenience feature */
-	sendToBackend();
         visible = document.getElementById("visible");
         /* Removes all elements from #visible aside from the header */
         while (visible.childNodes.length > 2) {
@@ -46,6 +43,7 @@ function timer() {
                         }
                         allVals[i].Current += allVals[i].Gain;
                 }
+		sendToBackend();
                 drawGrid();
         }
 }
@@ -198,6 +196,7 @@ $(document).ready(function() {
 		}
 		var tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: arrayList[3]}
                 allVals.push(tempObj);
+		sendToBackend();
                 drawGrid();
                 event.preventDefault();
         });
@@ -213,6 +212,7 @@ $(document).ready(function() {
                                 allVals[i].Current = Number(siblings[2].value);
                         }
                 }
+		sendToBackend();
                 drawGrid();
         });
 
