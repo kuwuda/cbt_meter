@@ -26,7 +26,7 @@ function drawGrid() {
         }
 }
 function timer() {
-        while (!paused) {
+        while (!paused && allVals.length != 0) {
                 for (var i in allVals) {
                         if (Number(allVals[i][2]) >= 100) {
                                 paused = true;
