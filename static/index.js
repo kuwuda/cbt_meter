@@ -8,7 +8,7 @@ var paused = true;
 var allVals = [];
 var idPool = [];
 
-var socket = new WebSocket("ws://localhost:8080/ws");
+var socket = new WebSocket("ws://" + document.location.host + "/ws");
 socket.onerror = function(error) {
 	console.log("WebSocket Error: " + error);
 };
