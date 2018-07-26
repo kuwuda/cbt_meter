@@ -5,7 +5,7 @@
  */
 var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID */ 
-var allVals = [];
+var dataPool = [];
 var idPool = [];
 
 var socket = new WebSocket("ws://" + document.location.host + "/ws");
@@ -13,7 +13,10 @@ socket.onerror = function(error) {
 	console.log("WebSocket Error: " + error);
 };
 socket.onmessage = function(event) {
-	allVals = JSON.parse(event.data);
+	var received = JSON.parse(event.data);
+	console.log(received);
+	dataPool = received.dataPool;
+	idPool   = received.idPool;
 	drawGrid();
 }
 
@@ -25,7 +28,8 @@ function compareAllVals(a,b) {
 	return 0;
 }
 function sendToBackend() {
-	socket.send(JSON.stringify(allVals));
+	var sent = {dataPool: dataPool, idPool: idPool};
+	socket.send(JSON.stringify(sent));
 }
 function getCurrentTable(visible) {
         if (visible == true) {
@@ -40,18 +44,18 @@ function drawGrid() {
         while (visible.childNodes.length > 2) {
                 visible.removeChild(visible.lastChild);
         }
-	allVals.sort(compareAllVals);
-        for (var i in allVals) {
-                appendList(allVals[i], true);
+	dataPool.sort(compareAllVals);
+        for (var i in dataPool) {
+                appendList(dataPool[i], true);
         }
 }
 function timer() {
-        while (!paused && allVals.length != 0) {
-                for (var i in allVals) {
-                        if (Number(allVals[i].Current) >= 100) {
+        while (!paused && dataPool.length != 0) {
+                for (var i in dataPool) {
+                        if (Number(dataPool[i].Current) >= 100) {
                                 paused = true;
                         }
-                        allVals[i].Current += allVals[i].Gain;
+                        dataPool[i].Current += dataPool[i].Gain;
                 }
 		sendToBackend();
                 drawGrid();
@@ -60,15 +64,15 @@ function timer() {
 
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
-                allVals = [];
+                dataPool = [];
 		sendToBackend()
                 drawGrid();
         }
 }
 function deleteRow(currObj) {
-	for (var i in allVals) {
-	        if (allVals[i].Id == currObj.Id) {
-	                allVals.splice(i, 1);
+	for (var i in dataPool) {
+	        if (dataPool[i].Id == currObj.Id) {
+	                dataPool.splice(i, 1);
 			idPool.push(currObj.Id);
 			idPool.sort(function(a,b){return b - a});
 	        }
@@ -77,18 +81,18 @@ function deleteRow(currObj) {
 	drawGrid();
 }
 function rest(currObj) {
-	for (var i in allVals) {
-	        if (allVals[i].Id == currObj.Id) {
-	                allVals[i].Current = 25;
+	for (var i in dataPool) {
+	        if (dataPool[i].Id == currObj.Id) {
+	                dataPool[i].Current = 25;
 	        }
 	}
 	sendToBackend();
 	drawGrid();
 }
 function zeroOut(currObj) {
-	for (var i in allVals) {
-	        if (allVals[i].Id == currObj.Id) {
-	                allVals[i].Current = 0;
+	for (var i in dataPool) {
+	        if (dataPool[i].Id == currObj.Id) {
+	                dataPool[i].Current = 0;
 	        }
 	}
 	sendToBackend();
@@ -210,24 +214,24 @@ $(document).ready(function() {
 		if (idPool.length > 0) {
                		arrayList.push(idPool.pop());
 		} else {
-			arrayList.push(allVals.length);
+			arrayList.push(dataPool.length);
 		}
 		var tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: arrayList[3]}
-                allVals.push(tempObj);
+                dataPool.push(tempObj);
 		sendToBackend();
                 drawGrid();
                 event.preventDefault();
         });
 
-        /* automatically updates allVals when an input in #visible changes */
+        /* automatically updates dataPool when an input in #visible changes */
         $("#visible").on("change", ":input", function () {
                 var siblings = $(this).parent().parent().find("input");
                 var id = siblings[3].value;
-                for (var i in allVals) {
-                        if (allVals[i].Id == id) {
-                                allVals[i].Name    = siblings[0].value;
-                                allVals[i].Gain    = Number(siblings[1].value);
-                                allVals[i].Current = Number(siblings[2].value);
+                for (var i in dataPool) {
+                        if (dataPool[i].Id == id) {
+                                dataPool[i].Name    = siblings[0].value;
+                                dataPool[i].Gain    = Number(siblings[1].value);
+                                dataPool[i].Current = Number(siblings[2].value);
                         }
                 }
 		sendToBackend();

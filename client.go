@@ -34,6 +34,11 @@ type Meter struct {
 	Visible bool
 }
 
+type mContainer struct {
+	dataPool []Meter
+	idPool   []string
+}
+
 /* Reads incoming data from websocket to server */
 func (c *Client) readPump() {
 	defer func() {
@@ -51,7 +56,7 @@ func (c *Client) readPump() {
 			break
 		}
 		/* validates as json */
-		data := make([]Meter, 0)
+		var data mContainer
 		err = json.Unmarshal(message, &data)
 		if err != nil {
 			/* Lazy error handling for now */
