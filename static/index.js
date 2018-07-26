@@ -17,15 +17,15 @@ socket.onmessage = function(event) {
 	drawGrid();
 }
 
-function reset() {
-        if (confirm("Are you sure you want to reset everything?")) {
-                allVals = [];
-		sendToBackend()
-                drawGrid();
-        }
-}
 function sendToBackend() {
 	socket.send(JSON.stringify(allVals));
+}
+function getCurrentTable(visible) {
+        if (visible == true) {
+                return document.getElementById("visible");
+        } else {
+                return document.getElementById("invisible");
+        }
 }
 function drawGrid() {
         visible = document.getElementById("visible");
@@ -49,12 +49,42 @@ function timer() {
                 drawGrid();
         }
 }
-function getCurrentTable(visible) {
-        if (visible == true) {
-                return document.getElementById("visible");
-        } else {
-                return document.getElementById("invisible");
+
+function reset() {
+        if (confirm("Are you sure you want to reset everything?")) {
+                allVals = [];
+		sendToBackend()
+                drawGrid();
         }
+}
+function delete(currObj) {
+	for (var i in allVals) {
+	        if (allVals[i].Id == currObj.Id) {
+	                allVals.splice(i, 1);
+			idPool.push(currObj.Id);
+			idPool.sort(function(a,b){return b - a});
+	        }
+	}
+	sendToBackend();
+	drawGrid();
+}
+function rest(currObj) {
+	for (var i in allVals) {
+	        if (allVals[i].Id == currObj.Id) {
+	                allVals[i].Current = 25;
+	        }
+	}
+	sendToBackend();
+	drawGrid();
+}
+function zeroOut(currObj) {
+	for (var i in allVals) {
+	        if (allVals[i].Id == currObj.Id) {
+	                allVals[i].Current = 0;
+	        }
+	}
+	sendToBackend();
+	drawGrid();
 }
 function appendList(currObj, visible) {
         var name = currObj.Name;
@@ -119,41 +149,19 @@ function appendList(currObj, visible) {
         delete_button.type    = "button";
         delete_button.name    = "delete";
         delete_button.value   = "Delete";
-        delete_button.onclick = function() { 
-                                                for (var i in allVals) {
-                                                        if (allVals[i].Id == currObj.Id) {
-                                                                allVals.splice(i, 1);
-								idPool.push(currObj.Id);
-								idPool.sort(function(a,b){return b - a});
-                                                        }
-                                                }
-                                                drawGrid();
-                                           };
+        delete_button.onclick = delete(currObj);
+
         var zero_button = document.createElement("input");
         zero_button.type    = "button";
         zero_button.name    = "zero";
         zero_button.value   = "Zero Out Meter";
-        zero_button.onclick = function () {
-                                                for (var i in allVals) {
-                                                        if (allVals[i].Id == currObj.Id) {
-                                                                allVals[i].Current = 0;
-                                                        }
-                                                }
-                                                drawGrid();
-                                          };
+        zero_button.onclick = zeroOut(currObj);
 
         var rest_button = document.createElement("input");
         rest_button.type    = "button";
         rest_button.name    = "rest";
         rest_button.value   = "Rest";
-        rest_button.onclick = function () {
-                                                for (var i in allVals) {
-                                                        if (allVals[i].Id == currObj.Id) {
-                                                                allVals[i].Current = 25;
-                                                        }
-                                                }
-                                                drawGrid();
-                                          };
+        rest_button.onclick = rest(currObj);
 
         opt_element.appendChild(hiddInput);
         opt_element.appendChild(delete_button);
@@ -198,8 +206,7 @@ $(document).ready(function() {
 		}
 		var tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: arrayList[3]}
                 allVals.push(tempObj);
-		//sendToBackend();
-		socket.send(JSON.stringify(allVals));
+		sendToBackend();
                 drawGrid();
                 event.preventDefault();
         });
