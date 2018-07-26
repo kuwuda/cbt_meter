@@ -7,7 +7,16 @@ var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID */ 
 var allVals = [];
 var idPool = [];
-setInterval(retrieveFromBackend(), 5*1000);
+
+var socket = new WebSocket("ws://localhost:8080/ws");
+socket.onerror = function(error) {
+	console.log("WebSocket Error: " + error);
+};
+socket.onmessage = function(event) {
+	allVals = JSON.parse(event.data);
+	drawGrid();
+}
+
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
                 allVals = [];
@@ -15,17 +24,10 @@ function reset() {
                 drawGrid();
         }
 }
-function retrieveFromBackend() {
-	$.post("/updateClient/", function( data ) {
-		allVals = JSON.parse(data);
-		drawGrid();
-	});
-}
 function sendToBackend() {
-	$.post("/updateServer/", JSON.stringify(allVals));
+	socket.send(JSON.stringify(allVals));
 }
 function drawGrid() {
-	/* This doesn't really belong here, more of a convenience feature */
         visible = document.getElementById("visible");
         /* Removes all elements from #visible aside from the header */
         while (visible.childNodes.length > 2) {
@@ -196,7 +198,8 @@ $(document).ready(function() {
 		}
 		var tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: arrayList[3]}
                 allVals.push(tempObj);
-		sendToBackend();
+		//sendToBackend();
+		socket.send(JSON.stringify(allVals));
                 drawGrid();
                 event.preventDefault();
         });
@@ -215,6 +218,4 @@ $(document).ready(function() {
 		sendToBackend();
                 drawGrid();
         });
-
-	retrieveFromBackend();
 });
