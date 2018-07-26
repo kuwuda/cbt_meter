@@ -65,7 +65,7 @@ function reset() {
                 drawGrid();
         }
 }
-function delete(currObj) {
+function deleteRow(currObj) {
 	for (var i in allVals) {
 	        if (allVals[i].Id == currObj.Id) {
 	                allVals.splice(i, 1);
@@ -157,19 +157,19 @@ function appendList(currObj, visible) {
         delete_button.type    = "button";
         delete_button.name    = "delete";
         delete_button.value   = "Delete";
-        delete_button.onclick = delete(currObj);
+        delete_button.onclick = function(){deleteRow(currObj)};
 
         var zero_button = document.createElement("input");
         zero_button.type    = "button";
         zero_button.name    = "zero";
         zero_button.value   = "Zero Out Meter";
-        zero_button.onclick = zeroOut(currObj);
+        zero_button.onclick = function(){zeroOut(currObj)};
 
         var rest_button = document.createElement("input");
         rest_button.type    = "button";
         rest_button.name    = "rest";
         rest_button.value   = "Rest";
-        rest_button.onclick = rest(currObj);
+        rest_button.onclick = function(){rest(currObj)};
 
         opt_element.appendChild(hiddInput);
         opt_element.appendChild(delete_button);
