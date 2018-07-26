@@ -14,7 +14,6 @@ socket.onerror = function(error) {
 };
 socket.onmessage = function(event) {
 	var received = JSON.parse(event.data);
-	console.log(received);
 	dataPool = received.dataPool;
 	idPool   = received.idPool;
 	drawGrid();
