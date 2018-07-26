@@ -17,6 +17,13 @@ socket.onmessage = function(event) {
 	drawGrid();
 }
 
+function compareAllVals(a,b) {
+	if (a.Current < b.Current)
+		return 1;
+	if (a.Current > b.Current)
+		return -1;
+	return 0;
+}
 function sendToBackend() {
 	socket.send(JSON.stringify(allVals));
 }
@@ -33,6 +40,7 @@ function drawGrid() {
         while (visible.childNodes.length > 2) {
                 visible.removeChild(visible.lastChild);
         }
+	allVals.sort(compareAllVals);
         for (var i in allVals) {
                 appendList(allVals[i], true);
         }
