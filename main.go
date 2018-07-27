@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-var addr = flag.String("addr", ":80", "http service address")
+var addr = flag.String("addr", ":8080", "http service address")
 
 var indexTemplate = template.Must(template.ParseFiles("index.html"))
 
@@ -87,17 +87,58 @@ func logout(w http.ResponseWriter, r *http.Request) {
 	var response string
 	_ = codec.Get(sessionToken, &response)
 
-	codec.Set(&cache.Item{
-		Key:        sessionToken,
-		Expiration: 0,
-	})
-
+	codec.Delete(sessionToken)
 	http.SetCookie(w, &http.Cookie{
 		Name:   "session_token",
 		Value:  "",
 		MaxAge: -1,
 	})
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func refresh(w http.ResponseWriter, r *http.Request) {
+	c, err := r.Cookie("session_token")
+	if err != nil {
+		if err == http.ErrNoCookie {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	sessionToken := c.Value
+
+	var response string
+	codec.Get(sessionToken, &response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	if response == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		return
+	}
+
+	u, err := uuid.NewV4()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	newSessionToken := u.String()
+
+	codec.Set(&cache.Item{
+		Key:        newSessionToken,
+		Object:     string(response),
+		Expiration: time.Hour,
+	})
+
+	codec.Delete(sessionToken)
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session_token",
+		Value:   newSessionToken,
+		Expires: time.Now().Add(time.Hour),
+	})
 }
 
 func validateLogin(r *http.Request) (bool, error) {
@@ -144,6 +185,7 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)
+	http.HandleFunc("/refresh", refresh)
 	http.HandleFunc("/", indexHandler)
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		serveWs(server, w, r)

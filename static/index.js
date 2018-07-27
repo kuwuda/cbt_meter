@@ -29,6 +29,8 @@ function compareAllVals(a,b) {
 function sendToBackend() {
 	var sent = {DataPool: DataPool, IdPool: IdPool};
 	socket.send(JSON.stringify(sent));
+	/* Refresh authentication */
+	$.get("/refresh");
 }
 function getCurrentTable(visible) {
         if (visible == true) {
@@ -271,7 +273,6 @@ $(document).ready(function() {
         /* automatically updates DataPool when an input changes */
         $("#visible, #invisible").on("change", ":input", function () {
                 var siblings = $(this).parent().parent().find("input");
-		console.log(siblings);
                 var id = siblings[3].value;
                 for (var i in DataPool) {
                         if (DataPool[i].Id == id) {
