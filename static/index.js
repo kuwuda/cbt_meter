@@ -18,6 +18,9 @@ socket.onmessage = function(event) {
 	IdPool   = received.IdPool;
 	drawGrid();
 }
+socket.onclose = function(event) {
+	$("#statusBar").textContent = "WebSocket connection closed! Please refresh the page.";
+}
 
 function compareAllVals(a,b) {
 	if (a.Current < b.Current)
@@ -261,7 +264,7 @@ $(document).ready(function() {
 			contentType: "application/json; charset=utf-8",
 			data: info,
 			error: function(error) {
-				$("#loginStatus").text("Log-in failed!");
+				$("#statusBar").text("Log-in failed!");
 			},
 			success: function (response) {
 				location.reload();

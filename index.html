@@ -15,6 +15,7 @@
 		</script>
 	</head>
 	<body>
+		<div id="statusBar">&nbsp;</div>
 		{{ if . }}
 		<input type="button" name="start" id="timer" onClick="paused=false; timer();" value="Run Timers"></input>
 		<input type="button" name="reset" id="reset" onClick="reset();" value="Reset"></button>
@@ -54,6 +55,7 @@
 			<input type="submit" placeholder="Create" value="Create">
 		</form>
 		{{ end }}
+		<div id="turnMeter">Wew</div>
 		{{ if not . }}
 		<details>
 			<summary>Log-in</summary>
