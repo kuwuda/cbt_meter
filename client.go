@@ -54,6 +54,7 @@ func parseData(in []byte, auth bool) (out []byte, err error) {
 			tempCont.DataPool = append(tempCont.DataPool, data.DataPool[i])
 		}
 	}
+	tempCont.IdPool = data.IdPool
 	out, err = json.Marshal(tempCont)
 	return
 }
