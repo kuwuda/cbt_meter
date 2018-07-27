@@ -46,15 +46,15 @@ func parseData(in []byte, auth bool) (out []byte, err error) {
 	if err != nil {
 		return
 	}
-	/* If the user is not authorized, remove all non-visible entries */
-	if !auth {
-		for i, n := range data.DataPool {
-			if !n.Visible {
-				data.DataPool = append(data.DataPool[:i], data.DataPool[i+1:]...)
-			}
+
+	/* Copy data into new container to remove invisible from normal array */
+	var tempCont mContainer
+	for i, n := range data.DataPool {
+		if n.Visible || auth {
+			tempCont.DataPool = append(tempCont.DataPool, data.DataPool[i])
 		}
 	}
-	out, err = json.Marshal(data)
+	out, err = json.Marshal(tempCont)
 	return
 }
 
