@@ -23,6 +23,7 @@ type Client struct {
 	server *Server
 	conn   *websocket.Conn
 	send   chan []byte
+	auth   bool
 }
 
 /* Used to validate message */
@@ -35,8 +36,26 @@ type Meter struct {
 }
 
 type mContainer struct {
-	dataPool []Meter
-	idPool   []string
+	DataPool []Meter
+	IdPool   []int
+}
+
+func parseData(in []byte, auth bool) (out []byte, err error) {
+	var data mContainer
+	err = json.Unmarshal(in, &data)
+	if err != nil {
+		return
+	}
+	/* If the user is not authorized, remove all non-visible entries */
+	if !auth {
+		for i, n := range data.DataPool {
+			if !n.Visible {
+				data.DataPool = append(data.DataPool[:i], data.DataPool[i+1:]...)
+			}
+		}
+	}
+	out, err = json.Marshal(data)
+	return
 }
 
 /* Reads incoming data from websocket to server */
@@ -54,6 +73,9 @@ func (c *Client) readPump() {
 				log.Printf("error: %v", err)
 			}
 			break
+		}
+		if c.auth != true {
+			return
 		}
 		/* validates as json */
 		var data mContainer
@@ -93,6 +115,11 @@ func (c *Client) writePump() {
 			if err != nil {
 				return
 			}
+			message, err = parseData(message, c.auth)
+			if err != nil {
+				log.Printf("%s", err)
+				return
+			}
 			w.Write(message)
 
 			if err := w.Close(); err != nil {
@@ -108,12 +135,14 @@ func (c *Client) writePump() {
 }
 
 func serveWs(server *Server, w http.ResponseWriter, r *http.Request) {
+	logged, _ := validateLogin(r)
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println(err)
 		return
 	}
-	client := &Client{server: server, conn: conn, send: make(chan []byte, 256)}
+	client := &Client{server: server, conn: conn, send: make(chan []byte, 256), auth: logged}
 	client.server.register <- client
 
 	go client.writePump()

@@ -4,9 +4,9 @@
  * Values are: name, ap gain, current ap, id
  */
 var paused = true;
-/* Array set-up is: Name, AP Gain, Current AP, ID */ 
-var dataPool = [];
-var idPool = [];
+/* Array set-up is: Name, AP Gain, Current AP, ID, visible */ 
+var DataPool = [];
+var IdPool = [];
 
 var socket = new WebSocket("ws://" + document.location.host + "/ws");
 socket.onerror = function(error) {
@@ -14,8 +14,8 @@ socket.onerror = function(error) {
 };
 socket.onmessage = function(event) {
 	var received = JSON.parse(event.data);
-	dataPool = received.dataPool;
-	idPool   = received.idPool;
+	DataPool = received.DataPool;
+	IdPool   = received.IdPool;
 	drawGrid();
 }
 
@@ -27,7 +27,7 @@ function compareAllVals(a,b) {
 	return 0;
 }
 function sendToBackend() {
-	var sent = {dataPool: dataPool, idPool: idPool};
+	var sent = {DataPool: DataPool, IdPool: IdPool};
 	socket.send(JSON.stringify(sent));
 }
 function getCurrentTable(visible) {
@@ -38,23 +38,27 @@ function getCurrentTable(visible) {
         }
 }
 function drawGrid() {
-        visible = document.getElementById("visible");
+        visible   = document.getElementById("visible");
+	invisible = document.getElementById("invisible");
         /* Removes all elements from #visible aside from the header */
         while (visible.childNodes.length > 2) {
                 visible.removeChild(visible.lastChild);
         }
-	dataPool.sort(compareAllVals);
-        for (var i in dataPool) {
-                appendList(dataPool[i], true);
+        while (invisible.childNodes.length > 2) {
+                invisible.removeChild(invisible.lastChild);
+        }
+	DataPool.sort(compareAllVals);
+        for (var i in DataPool) {
+                appendList(DataPool[i]);
         }
 }
 function timer() {
-        while (!paused && dataPool.length != 0) {
-                for (var i in dataPool) {
-                        if (Number(dataPool[i].Current) >= 100) {
+        while (!paused && DataPool.length != 0) {
+                for (var i in DataPool) {
+                        if (Number(DataPool[i].Current) >= 100) {
                                 paused = true;
                         }
-                        dataPool[i].Current += dataPool[i].Gain;
+                        DataPool[i].Current += DataPool[i].Gain;
                 }
 		sendToBackend();
                 drawGrid();
@@ -63,41 +67,41 @@ function timer() {
 
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
-                dataPool = [];
+                DataPool = [];
 		sendToBackend()
                 drawGrid();
         }
 }
 function deleteRow(currObj) {
-	for (var i in dataPool) {
-	        if (dataPool[i].Id == currObj.Id) {
-	                dataPool.splice(i, 1);
-			idPool.push(currObj.Id);
-			idPool.sort(function(a,b){return b - a});
+	for (var i in DataPool) {
+	        if (DataPool[i].Id == currObj.Id) {
+	                DataPool.splice(i, 1);
+			IdPool.push(currObj.Id);
+			IdPool.sort(function(a,b){return b - a});
 	        }
 	}
 	sendToBackend();
 	drawGrid();
 }
 function rest(currObj) {
-	for (var i in dataPool) {
-	        if (dataPool[i].Id == currObj.Id) {
-	                dataPool[i].Current = 25;
+	for (var i in DataPool) {
+	        if (DataPool[i].Id == currObj.Id) {
+	                DataPool[i].Current = 25;
 	        }
 	}
 	sendToBackend();
 	drawGrid();
 }
 function zeroOut(currObj) {
-	for (var i in dataPool) {
-	        if (dataPool[i].Id == currObj.Id) {
-	                dataPool[i].Current = 0;
+	for (var i in DataPool) {
+	        if (DataPool[i].Id == currObj.Id) {
+	                DataPool[i].Current = 0;
 	        }
 	}
 	sendToBackend();
 	drawGrid();
 }
-function appendList(currObj, visible) {
+function appendList(currObj) {
         var name = currObj.Name;
         var gain = currObj.Gain;
         var curr = currObj.Current;
@@ -105,7 +109,7 @@ function appendList(currObj, visible) {
          * Feels weird creating so many variables just to discard them
          * I don't think there's a better method of doing this though.
          */
-        var currentTable  = getCurrentTable(visible);
+        var currentTable  = getCurrentTable(currObj.Visible);
         var row_element   = document.createElement("tr");
         var meter_element = document.createElement("td");
         var name_element  = document.createElement("td");
@@ -132,64 +136,78 @@ function appendList(currObj, visible) {
         meter_element.appendChild(meter_fg);
 
         /* I feel like there's a better way to do this */
-        var nameInput = document.createElement("input");
-        nameInput.type  = "text";
-        nameInput.name  = "name";
-        nameInput.value = name;
-        name_element.appendChild(nameInput);
+	if (logged) {
+		var nameInput = document.createElement("input");
+		nameInput.type  = "text";
+		nameInput.name  = "name";
+		nameInput.value = name;
+		name_element.appendChild(nameInput);
+	} else {
+		name_element.textContent = name;
+	}
 
-        var gainInput = document.createElement("input");
-        gainInput.type  = "text";
-        gainInput.name  = "gain";
-        gainInput.value = gain;
-        gain_element.appendChild(gainInput);
+	if (logged) {
+		var gainInput = document.createElement("input");
+		gainInput.type  = "text";
+		gainInput.name  = "gain";
+		gainInput.value = gain;
+		gain_element.appendChild(gainInput);
+	} else {
+		gain_element.textContent = gain;
+	}
 
-        var currInput = document.createElement("input");
-        currInput.type  = "text";
-        currInput.name  = "curr";
-        currInput.value = curr;
-        curr_element.appendChild(currInput);
+	if (logged) {
+		var currInput = document.createElement("input");
+		currInput.type  = "text";
+		currInput.name  = "curr";
+		currInput.value = curr;
+		curr_element.appendChild(currInput);
+	} else {
+		curr_element.textContent = curr;
+	}
 
-        var hiddInput = document.createElement("input");
-        hiddInput.type  = "hidden";
-        hiddInput.name  = "id";
-        hiddInput.value = currObj.Id;
-        opt_element.appendChild(hiddInput);
-
-        var delete_button = document.createElement("input");
-        delete_button.type    = "button";
-        delete_button.name    = "delete";
-        delete_button.value   = "Delete";
-        delete_button.onclick = function(){deleteRow(currObj)};
-
-        var zero_button = document.createElement("input");
-        zero_button.type    = "button";
-        zero_button.name    = "zero";
-        zero_button.value   = "Zero Out Meter";
-        zero_button.onclick = function(){zeroOut(currObj)};
-
-        var rest_button = document.createElement("input");
-        rest_button.type    = "button";
-        rest_button.name    = "rest";
-        rest_button.value   = "Rest";
-        rest_button.onclick = function(){rest(currObj)};
-
-        opt_element.appendChild(hiddInput);
-        opt_element.appendChild(delete_button);
-        opt_element.appendChild(zero_button);
-        opt_element.appendChild(rest_button);
-
+	if (logged) {
+		var hiddInput = document.createElement("input");
+		hiddInput.type  = "hidden";
+		hiddInput.name  = "id";
+		hiddInput.value = currObj.Id;
+		opt_element.appendChild(hiddInput);
+		
+		var delete_button = document.createElement("input");
+		delete_button.type    = "button";
+		delete_button.name    = "delete";
+		delete_button.value   = "Delete";
+		delete_button.onclick = function(){deleteRow(currObj)};
+		
+		var zero_button = document.createElement("input");
+		zero_button.type    = "button";
+		zero_button.name    = "zero";
+		zero_button.value   = "Zero Out Meter";
+		zero_button.onclick = function(){zeroOut(currObj)};
+		
+		var rest_button = document.createElement("input");
+		rest_button.type    = "button";
+		rest_button.name    = "rest";
+		rest_button.value   = "Rest";
+		rest_button.onclick = function(){rest(currObj)};
+		
+		opt_element.appendChild(hiddInput);
+		opt_element.appendChild(delete_button);
+		opt_element.appendChild(zero_button);
+		opt_element.appendChild(rest_button);
+	}
         
-        row_element.appendChild(meter_element);
-        row_element.appendChild(name_element);
-        row_element.appendChild(gain_element);
-        row_element.appendChild(curr_element);
-        row_element.appendChild(opt_element);
-
-        currentTable.appendChild(row_element);
+	row_element.appendChild(meter_element);
+	row_element.appendChild(name_element);
+	row_element.appendChild(gain_element);
+	row_element.appendChild(curr_element);
+	if (logged)
+		row_element.appendChild(opt_element);
+	
+	currentTable.appendChild(row_element);
 }
 $(document).ready(function() {
-        $( "form" ).submit(function( event ) {
+        $( "#new" ).submit(function( event ) {
                 /*
                  * Make sure to secure this against XSS attacks
                  * Probably just HTML / JS encode data before doing anything with it
@@ -203,34 +221,63 @@ $(document).ready(function() {
                          * Javascript is dynamically typed so it counts the form input value as a string
                          * Have to cast it to an int (where appropriate) so it doesn't do that.
                          */
-                        if (i == 0 ) {
+                        if (i == 0 || i == 3 ) {
                                 arrayList.push(newList[i].value);
                         } else {
-                                arrayList.push(Number(newList[i].value));
-                        }
+				arrayList.push(Number(newList[i].value));
+			}
 
                 }
-		if (idPool.length > 0) {
-               		arrayList.push(idPool.pop());
+		/*
+		 * Extra code required since HTML checkboxes are weird
+		 * There's probably a better solution to this
+		 */
+		var tempObj = {};
+		var tempId;
+		if (IdPool.length > 0) {
+               		tempId = IdPool.pop();
 		} else {
-			arrayList.push(dataPool.length);
-		}
-		var tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: arrayList[3]}
-                dataPool.push(tempObj);
+			tempId = DataPool.length;
+		} if (arrayList.length == 3) { tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: false} } else { tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: true} }
+                DataPool.push(tempObj);
 		sendToBackend();
                 drawGrid();
                 event.preventDefault();
         });
 
-        /* automatically updates dataPool when an input in #visible changes */
-        $("#visible").on("change", ":input", function () {
+	$( "#login" ).submit(function( event ) {
+                event.preventDefault();
+		var data = $( this ).serializeArray();
+		var data2 = {};
+		data2.Username = data[0].value;
+		data2.Password = data[1].value;
+		var info = JSON.stringify(data2);
+
+		$.ajax({
+			method: "POST",
+			url: "/login",
+			contentType: "application/json; charset=utf-8",
+			data: info,
+			error: function(error) {
+				$("#loginStatus").text("Log-in failed!");
+			},
+			success: function (response) {
+				location.reload();
+			}
+		});
+        });
+
+
+        /* automatically updates DataPool when an input changes */
+        $("#visible, #invisible").on("change", ":input", function () {
                 var siblings = $(this).parent().parent().find("input");
+		console.log(siblings);
                 var id = siblings[3].value;
-                for (var i in dataPool) {
-                        if (dataPool[i].Id == id) {
-                                dataPool[i].Name    = siblings[0].value;
-                                dataPool[i].Gain    = Number(siblings[1].value);
-                                dataPool[i].Current = Number(siblings[2].value);
+                for (var i in DataPool) {
+                        if (DataPool[i].Id == id) {
+                                DataPool[i].Name    = siblings[0].value;
+                                DataPool[i].Gain    = Number(siblings[1].value);
+                                DataPool[i].Current = Number(siblings[2].value);
                         }
                 }
 		sendToBackend();

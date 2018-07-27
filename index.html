@@ -5,11 +5,37 @@
 		<meta charset="UTF-8">
 		<script src="./static/jquery-3.3.1.min.js"></script>
 		<script src="./static/index.js"></script>
+		<script>
+			{{ if not . }}
+			var logged = false;
+			{{ end }}
+			{{ if . }}
+			var logged = true;
+			{{ end }}
+		</script>
 	</head>
 	<body>
+		{{ if . }}
 		<input type="button" name="start" id="timer" onClick="paused=false; timer();" value="Run Timers"></input>
 		<input type="button" name="reset" id="reset" onClick="reset();" value="Reset"></button>
+		<h1>Player Visible</h1>
+		{{ end }}
 		<table id="visible">
+			<tr>
+				<th>Meter</th>
+				<th>Name</th>
+				<th>AP Gain</th>
+				<th>Current AP</th>
+				{{ if . }}
+				<th>Options</th>
+				{{ end }}
+			</tr>
+		</table>
+		{{ if . }}
+		<h1>GM Only</h1>
+		{{ end }}
+		<table id="invisible">
+			{{ if . }}
 			<tr>
 				<th>Meter</th>
 				<th>Name</th>
@@ -17,12 +43,29 @@
 				<th>Current AP</th>
 				<th>Options</th>
 			</tr>
+			{{ end }}
 		</table>
+		{{ if . }}
 		<form id="new">
 			<input type="text" name="name" placeholder="Name">
 			<input type="text" name="gain" placeholder="AP Gain">
 			<input type="text" name="curr" placeholder="Current AP">
+			<input type="checkbox" name="visible" value="true" checked />Visible
 			<input type="submit" placeholder="Create" value="Create">
 		</form>
+		{{ end }}
+		{{ if not . }}
+		<details>
+			<summary>Log-in</summary>
+			<form id="login">
+				<input type="text"     name="Username" placeholder="Username">
+				<input type="password" name="Password" placeholder="Password">
+				<input type="submit"   value="Log-in">
+			</form>
+		</details>
+		{{ end }}
+		{{ if . }}
+		<a href="/logout">Log-out</a>
+		{{ end }}
 	</body>
 </html>
