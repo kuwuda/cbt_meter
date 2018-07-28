@@ -67,6 +67,8 @@ func parseData(in []byte, auth bool) (out []byte, err error) {
 	return
 }
 
+var tmRunning bool
+
 /* Reads incoming data from websocket to server */
 func (c *Client) readPump() {
 	defer func() {
@@ -96,7 +98,7 @@ func (c *Client) readPump() {
 			return
 		}
 
-		if data.TurnMeter.Ticking == true {
+		if data.TurnMeter.Ticking == true && tmRunning == false {
 			ticker := time.NewTicker(time.Second)
 			quit := make(chan struct{})
 			go func() {
@@ -104,11 +106,13 @@ func (c *Client) readPump() {
 					select {
 					case <-ticker.C:
 						go func() {
+							tmRunning = true
 							if data.TurnMeter.Ticking == true && data.TurnMeter.Current > 0 {
 								data.TurnMeter.Current--
 							}
 							if data.TurnMeter.Current <= 0 || data.TurnMeter.Ticking == false {
 								data.TurnMeter.Ticking = false
+								tmRunning = false
 								close(quit)
 							}
 							message, err = json.Marshal(data)

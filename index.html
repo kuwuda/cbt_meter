@@ -58,13 +58,14 @@
 			</tr>
 			{{ end }}
 		</table>
+		{{ if . }}
 		<form id="turnMeterForm">
 			<input type="text" name="maxTime" placeholder="Time">
 			<input type="submit" value="Start Meter">
 		</form>
+		{{ end }}
 		<div id="turnMeter">
-			<div id="turnForeground">
-			</div>
+			<div id="turnForeground"></div>
 		</div>
 		{{ if . }}
 		<form id="new">
