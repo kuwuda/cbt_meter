@@ -5,6 +5,18 @@
 		<meta charset="UTF-8">
 		<script src="./static/jquery-3.3.1.min.js"></script>
 		<script src="./static/index.js"></script>
+		<style>
+			#turnMeter {
+				background-color:  grey;
+				display: flex;
+				text-align: center;
+				color: #f0f0f0;
+			}
+			#turnForeground {
+				background-color: green;
+				width: 0%;
+			}
+		</style>
 		<script>
 			{{ if not . }}
 			var logged = false;
@@ -46,6 +58,14 @@
 			</tr>
 			{{ end }}
 		</table>
+		<form id="turnMeterForm">
+			<input type="text" name="maxTime" placeholder="Time">
+			<input type="submit" value="Start Meter">
+		</form>
+		<div id="turnMeter">
+			<div id="turnForeground">
+			</div>
+		</div>
 		{{ if . }}
 		<form id="new">
 			<input type="text" name="name" placeholder="Name">
@@ -55,7 +75,6 @@
 			<input type="submit" placeholder="Create" value="Create">
 		</form>
 		{{ end }}
-		<div id="turnMeter">Wew</div>
 		{{ if not . }}
 		<details>
 			<summary>Log-in</summary>

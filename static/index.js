@@ -7,6 +7,7 @@ var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID, visible */ 
 var DataPool = [];
 var IdPool = [];
+var TurnMeter;
 
 var socket = new WebSocket("ws://" + document.location.host + "/ws");
 socket.onerror = function(error) {
@@ -14,8 +15,9 @@ socket.onerror = function(error) {
 };
 socket.onmessage = function(event) {
 	var received = JSON.parse(event.data);
-	DataPool = received.DataPool;
-	IdPool   = received.IdPool;
+	DataPool  = received.DataPool;
+	IdPool    = received.IdPool;
+	TurnMeter = received.TurnMeter;
 	drawGrid();
 }
 socket.onclose = function(event) {
@@ -30,7 +32,7 @@ function compareAllVals(a,b) {
 	return 0;
 }
 function sendToBackend() {
-	var sent = {DataPool: DataPool, IdPool: IdPool};
+	var sent = {DataPool: DataPool, IdPool: IdPool, TurnMeter: TurnMeter};
 	socket.send(JSON.stringify(sent));
 	/* Refresh authentication */
 	$.get("/refresh");
@@ -52,6 +54,7 @@ function drawGrid() {
         while (invisible.childNodes.length > 2) {
                 invisible.removeChild(invisible.lastChild);
         }
+	turnMeterDisplay();
 	DataPool.sort(compareAllVals);
         for (var i in DataPool) {
                 appendList(DataPool[i]);
@@ -105,6 +108,25 @@ function zeroOut(currObj) {
 	}
 	sendToBackend();
 	drawGrid();
+}
+function turnMeterDisplay() {
+	var percent = (TurnMeter.Current / TurnMeter.Max) * 100;
+	if (TurnMeter.Max != 0) {
+		$("#turnForeground").css("width", percent + "%");
+	} else {
+		$("#turnForeground").css("width", "0%");
+	}
+
+	console.log(percent);
+	if (percent > 70) {
+		document.getElementById("turnForeground").style.backgroundColor = "green";
+	} else if (percent < 70 && percent > 30) {
+		document.getElementById("turnForeground").style.backgroundColor = "#cccc22";
+	} else {
+		document.getElementById("turnForeground").style.backgroundColor = "red";
+	}
+
+	document.getElementById("turnForeground").textContent = TurnMeter.Current;
 }
 function appendList(currObj) {
         var name = currObj.Name;
@@ -271,6 +293,15 @@ $(document).ready(function() {
 			}
 		});
         });
+
+	$( "#turnMeterForm" ).submit(function( event ) {
+		event.preventDefault();
+		var data = $( this ).serializeArray();
+		TurnMeter.Current = Number(data[0].value);
+		TurnMeter.Max     = Number(data[0].value);
+		TurnMeter.Ticking = true;
+		sendToBackend();
+	});
 
 
         /* automatically updates DataPool when an input changes */

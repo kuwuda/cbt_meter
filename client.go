@@ -35,9 +35,16 @@ type Meter struct {
 	Visible bool
 }
 
+type TurnMeter struct {
+	Max     int
+	Current int
+	Ticking bool
+}
+
 type mContainer struct {
-	DataPool []Meter
-	IdPool   []int
+	DataPool  []Meter
+	IdPool    []int
+	TurnMeter TurnMeter
 }
 
 func parseData(in []byte, auth bool) (out []byte, err error) {
@@ -55,6 +62,7 @@ func parseData(in []byte, auth bool) (out []byte, err error) {
 		}
 	}
 	tempCont.IdPool = data.IdPool
+	tempCont.TurnMeter = data.TurnMeter
 	out, err = json.Marshal(tempCont)
 	return
 }
@@ -81,17 +89,50 @@ func (c *Client) readPump() {
 		/* validates as json */
 		var data mContainer
 		err = json.Unmarshal(message, &data)
+
 		if err != nil {
 			/* Lazy error handling for now */
 			log.Printf("%s", err)
-		} else {
-			err = redisClient.Set("data", message, 0).Err()
-			if err != nil {
-				log.Printf("%s", err)
-				return
-			}
-			c.server.broadcast <- message
+			return
 		}
+
+		if data.TurnMeter.Ticking == true {
+			ticker := time.NewTicker(time.Second)
+			quit := make(chan struct{})
+			go func() {
+				for {
+					select {
+					case <-ticker.C:
+						go func() {
+							if data.TurnMeter.Ticking == true && data.TurnMeter.Current > 0 {
+								data.TurnMeter.Current--
+							}
+							if data.TurnMeter.Current <= 0 || data.TurnMeter.Ticking == false {
+								data.TurnMeter.Ticking = false
+								close(quit)
+							}
+							message, err = json.Marshal(data)
+							err = redisClient.Set("data", message, 0).Err()
+							if err != nil {
+								log.Printf("%s", err)
+								return
+							}
+							c.server.broadcast <- message
+						}()
+					case <-quit:
+						ticker.Stop()
+						return
+					}
+				}
+			}()
+		}
+
+		err = redisClient.Set("data", message, 0).Err()
+		if err != nil {
+			log.Printf("%s", err)
+			return
+		}
+		c.server.broadcast <- message
 	}
 }
 
@@ -121,6 +162,7 @@ func (c *Client) writePump() {
 				log.Printf("%s", err)
 				return
 			}
+
 			w.Write(message)
 
 			if err := w.Close(); err != nil {
