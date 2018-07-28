@@ -38,7 +38,6 @@ type Meter struct {
 type TurnMeter struct {
 	Max     int
 	Current int
-	Ticking bool
 }
 
 type mContainer struct {
@@ -98,7 +97,7 @@ func (c *Client) readPump() {
 			return
 		}
 
-		if data.TurnMeter.Ticking == true && tmRunning == false {
+		if data.TurnMeter.Current > 0 && tmRunning == false {
 			ticker := time.NewTicker(time.Second)
 			quit := make(chan struct{})
 			go func() {
@@ -107,11 +106,10 @@ func (c *Client) readPump() {
 					case <-ticker.C:
 						go func() {
 							tmRunning = true
-							if data.TurnMeter.Ticking == true && data.TurnMeter.Current > 0 {
+							if data.TurnMeter.Current > 0 {
 								data.TurnMeter.Current--
 							}
-							if data.TurnMeter.Current <= 0 || data.TurnMeter.Ticking == false {
-								data.TurnMeter.Ticking = false
+							if data.TurnMeter.Current <= 0 {
 								tmRunning = false
 								close(quit)
 							}

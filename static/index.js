@@ -117,10 +117,9 @@ function turnMeterDisplay() {
 		$("#turnForeground").css("width", "0%");
 	}
 
-	console.log(percent);
 	if (percent > 70) {
 		document.getElementById("turnForeground").style.backgroundColor = "green";
-	} else if (percent < 70 && percent > 30) {
+	} else if (percent <= 70 && percent > 30) {
 		document.getElementById("turnForeground").style.backgroundColor = "#cccc22";
 	} else {
 		document.getElementById("turnForeground").style.backgroundColor = "red";
@@ -299,7 +298,6 @@ $(document).ready(function() {
 		var data = $( this ).serializeArray();
 		TurnMeter.Current = Number(data[0].value);
 		TurnMeter.Max     = Number(data[0].value);
-		TurnMeter.Ticking = true;
 		sendToBackend();
 	});
 
