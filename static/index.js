@@ -21,7 +21,7 @@ socket.onmessage = function(event) {
 	drawGrid();
 }
 socket.onclose = function(event) {
-	$("#statusBar").textContent = "WebSocket connection closed! Please refresh the page.";
+	$("#statusBar").text("WebSocket connection closed! Please refresh the page.");
 }
 
 function compareAllVals(a,b) {
