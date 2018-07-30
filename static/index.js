@@ -109,6 +109,15 @@ function zeroOut(currObj) {
 	sendToBackend();
 	drawGrid();
 }
+function swapVisible(swapTo, currObj) {
+	for (var i in DataPool) {
+		if (DataPool[i].Id == currObj.Id) {
+			DataPool[i].Visible = swapTo;
+		}
+	}
+	sendToBackend();
+	drawGrid();
+}
 function turnMeterDisplay() {
 	var percent = (TurnMeter.Current / TurnMeter.Max) * 100;
 	if (TurnMeter.Max != 0) {
@@ -217,9 +226,21 @@ function appendList(currObj) {
 		rest_button.value   = "Rest";
 		rest_button.onclick = function(){rest(currObj)};
 		
+		var swap_visible = document.createElement("input");
+		swap_visible.type  = "button";
+		swap_visible.name  = "visibility";
+		if (currentTable == document.getElementById("visible")) {
+			swap_visible.value = "Hide from players";
+			swap_visible.onclick = function() { swapVisible(false, currObj) };
+		} else {
+			swap_visible.value = "Show to players";
+			swap_visible.onclick = function() { swapVisible(true, currObj) };
+		}
+
 		opt_element.appendChild(hiddInput);
 		opt_element.appendChild(delete_button);
 		opt_element.appendChild(zero_button);
+		opt_element.appendChild(swap_visible);
 		opt_element.appendChild(rest_button);
 	}
         
