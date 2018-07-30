@@ -1,5 +1,10 @@
 package main
 
+import (
+	"github.com/go-redis/redis"
+	"log"
+)
+
 type Server struct {
 	clients    map[*Client]bool
 	broadcast  chan []byte
@@ -23,7 +28,15 @@ func (s *Server) run() {
 			s.clients[client] = true
 			str, err := redisClient.Get("data").Result()
 			if err != nil {
-				break
+				if err == redis.Nil {
+					str = "{\"DataPool\": [], \"IdPool\": [], \"TurnMeter\": {}}"
+					err = redisClient.Set("data", str, 0).Err()
+					if err != nil {
+						log.Printf("%s", err)
+					}
+				} else {
+					log.Printf("%s", err)
+				}
 			}
 			message := []byte(str)
 			client.send <- message

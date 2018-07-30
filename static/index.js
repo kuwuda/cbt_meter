@@ -6,7 +6,7 @@
 var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID, visible */ 
 var DataPool = Array();
-var IdPool = [];
+var IdPool = Array();
 var TurnMeter;
 
 var socket = new WebSocket("ws://" + document.location.host + "/ws");
