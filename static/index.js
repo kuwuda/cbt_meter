@@ -5,7 +5,7 @@
  */
 var paused = true;
 /* Array set-up is: Name, AP Gain, Current AP, ID, visible */ 
-var DataPool = [];
+var DataPool = Array();
 var IdPool = [];
 var TurnMeter;
 
@@ -16,6 +16,8 @@ socket.onerror = function(error) {
 socket.onmessage = function(event) {
 	var received = JSON.parse(event.data);
 	DataPool  = received.DataPool;
+	if (DataPool == null)
+		DataPool = Array();
 	IdPool    = received.IdPool;
 	TurnMeter = received.TurnMeter;
 	drawGrid();
@@ -285,8 +287,16 @@ $(document).ready(function() {
                		tempId = IdPool.pop();
 		} else {
 			tempId = DataPool.length;
-		} if (arrayList.length == 3) { tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: false} } else { tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: true} }
+		}
+
+		if (arrayList.length == 3) {
+			tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: false}
+		} else {
+			tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: true} 
+		}
+
                 DataPool.push(tempObj);
+
 		sendToBackend();
                 drawGrid();
                 event.preventDefault();
