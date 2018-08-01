@@ -23,9 +23,30 @@ socket.onmessage = function(event) {
 	drawGrid();
 }
 socket.onclose = function(event) {
-	$("#statusBar").text("WebSocket connection closed! Please refresh the page.");
+	document.getElementById("statusBar").textContent = "WebSocket connection closed! Please refresh the page.";
 }
 
+function serializeArray(form) {
+	var field, l, s = [];
+	if (typeof form == 'object' && form.nodeName == "FORM") {
+		var len = form.elements.length;
+		for (var i=0; i<len; i++) {
+			field = form.elements[i];
+			if (field.name && !field.disabled && field.type != 'file' && field.type != 'reset' && field.type != 'submit' && field.type != 'button') {
+				if (field.type == 'select-multiple') {
+					l = form.elements[i].options.length; 
+					for (j=0; j<l; j++) {
+						if(field.options[j].selected)
+						s[s.length] = { name: field.name, value: field.options[j].value };
+					}
+				} else if ((field.type != 'checkbox' && field.type != 'radio') || field.checked) {
+					s[s.length] = { name: field.name, value: field.value };
+				}
+			}
+		}
+	}
+	return s;
+}
 function compareAllVals(a,b) {
 	if (a.Current < b.Current)
 		return 1;
@@ -37,7 +58,7 @@ function sendToBackend() {
 	var sent = {DataPool: DataPool, IdPool: IdPool, TurnMeter: TurnMeter};
 	socket.send(JSON.stringify(sent));
 	/* Refresh authentication */
-	$.get("/refresh");
+	fetch("/refresh", { method: "GET", credentials: "same-origin", });
 }
 function getCurrentTable(visible) {
         if (visible == true) {
@@ -123,9 +144,9 @@ function swapVisible(swapTo, currObj) {
 function turnMeterDisplay() {
 	var percent = (TurnMeter.Current / TurnMeter.Max) * 100;
 	if (TurnMeter.Max != 0) {
-		$("#turnForeground").css("width", percent + "%");
+		document.getElementById("turnForeground").style.width = percent + "%";
 	} else {
-		$("#turnForeground").css("width", "0%");
+		document.getElementById("turnForeground").style.width = "0%";
 	}
 
 	if (percent > 70) {
@@ -255,87 +276,91 @@ function appendList(currObj) {
 	
 	currentTable.appendChild(row_element);
 }
-$(document).ready(function() {
-        $( "#new" ).submit(function( event ) {
-                /*
-                 * Make sure to secure this against XSS attacks
-                 * Probably just HTML / JS encode data before doing anything with it
-		 *
-		 * I could probably skip one of these steps
-                 */
-                var newList = $( this ).serializeArray();
-                var arrayList = [];
-                for (var i in newList) {
-                        /* 
-                         * Javascript is dynamically typed so it counts the form input value as a string
-                         * Have to cast it to an int (where appropriate) so it doesn't do that.
-                         */
-                        if (i == 0 || i == 3 ) {
-                                arrayList.push(newList[i].value);
-                        } else {
-				arrayList.push(Number(newList[i].value));
+window.onload = function () {
+	if (logged) {
+		document.getElementById("new").addEventListener("submit", function( event ) {
+			event.preventDefault();
+			/*
+        		 * Make sure to secure this against XSS attacks
+        		 * Probably just HTML / JS encode data before doing anything with it
+			 *
+			 * I could probably skip one of these steps
+        		 */
+        		var newList = serializeArray(this);
+        		var arrayList = [];
+        		for (var i in newList) {
+        		        /* 
+        		         * Javascript is dynamically typed so it counts the form input value as a string
+        		         * Have to cast it to an int (where appropriate) so it doesn't do that.
+        		         */
+        		        if (i == 0 || i == 3 ) {
+        		                arrayList.push(newList[i].value);
+        		        } else {
+					arrayList.push(Number(newList[i].value));
+				}
+
+        		}
+			/*
+			 * Extra code required since HTML checkboxes are weird
+			 * There's probably a better solution to this
+			 */
+			var tempObj = {};
+			var tempId;
+			if (IdPool.length > 0) {
+        			tempId = IdPool.pop();
+			} else {
+				tempId = DataPool.length;
 			}
 
-                }
-		/*
-		 * Extra code required since HTML checkboxes are weird
-		 * There's probably a better solution to this
-		 */
-		var tempObj = {};
-		var tempId;
-		if (IdPool.length > 0) {
-               		tempId = IdPool.pop();
-		} else {
-			tempId = DataPool.length;
-		}
-
-		if (arrayList.length == 3) {
-			tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: false}
-		} else {
-			tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: true} 
-		}
-
-                DataPool.push(tempObj);
-
-		sendToBackend();
-                drawGrid();
-                event.preventDefault();
-        });
-
-	$( "#login" ).submit(function( event ) {
-                event.preventDefault();
-		var data = $( this ).serializeArray();
-		var data2 = {};
-		data2.Username = data[0].value;
-		data2.Password = data[1].value;
-		var info = JSON.stringify(data2);
-
-		$.ajax({
-			method: "POST",
-			url: "/login",
-			contentType: "application/json; charset=utf-8",
-			data: info,
-			error: function(error) {
-				$("#statusBar").text("Log-in failed!");
-			},
-			success: function (response) {
-				location.reload();
+			if (arrayList.length == 3) {
+				tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: false}
+			} else {
+				tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: true} 
 			}
+
+        		DataPool.push(tempObj);
+
+			sendToBackend();
+        		drawGrid();
 		});
-        });
 
-	$( "#turnMeterForm" ).submit(function( event ) {
-		event.preventDefault();
-		var data = $( this ).serializeArray();
-		TurnMeter.Current = Number(data[0].value);
-		TurnMeter.Max     = Number(data[0].value);
-		sendToBackend();
-	});
+		document.getElementById("turnMeterForm").addEventListener("submit", function( event ) {
+			event.preventDefault();
+			var data = serializeArray(this);
+			TurnMeter.Current = Number(data[0].value);
+			TurnMeter.Max     = Number(data[0].value);
+			sendToBackend();
+		});
+	} else {
+		document.getElementById("login").addEventListener("submit", function( event ) {
+        	        event.preventDefault();
+			var data = serializeArray(this);
+			var data2 = {};
+			data2.Username = data[0].value;
+			data2.Password = data[1].value;
+			var info = JSON.stringify(data2);
+
+			fetch("/login", {
+				method: "POST",
+				mode: "same-origin",
+				credentials: "same-origin",
+				headers: {
+					"Content-Type": "application/json; charset=utf-8"
+				},
+				body: info,
+			}).then(function(response) {
+				if (!response.ok) {
+					document.getElementById("statusBar").textContent = "Log-in failed!";
+				} else {
+					location.reload();
+				}
+			});
+        	});
+	}
 
 
-        /* automatically updates DataPool when an input changes */
-        $("#visible, #invisible").on("change", ":input", function () {
-                var siblings = $(this).parent().parent().find("input");
+	function updateDataPool(element) {
+		var siblings = element.parentElement.parentElement.querySelectorAll("input");
                 var id = siblings[3].value;
                 for (var i in DataPool) {
                         if (DataPool[i].Id == id) {
@@ -346,5 +371,21 @@ $(document).ready(function() {
                 }
 		sendToBackend();
                 drawGrid();
-        });
-});
+
+	}
+
+        /* automatically updates DataPool when an input changes */
+	var visible = document.getElementById("visible");
+	visible.addEventListener('change', function(event) {
+		if (event.target.matches('input')) {
+			updateDataPool(event.target);
+	  	}
+	});
+
+	var invisible = document.getElementById("visible");
+	invisible.addEventListener('change', function(event) {
+		if (event.target.matches('input')) {
+			updateDataPool(event.target);
+	  	}
+	});
+}
