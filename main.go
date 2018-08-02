@@ -189,6 +189,7 @@ func main() {
 	m.AddFunc("text/css", css.Minify)
 	m.AddFunc("text/javascript", js.Minify)
 	m.AddFunc("application/x-javascript", js.Minify)
+	m.AddFunc("application/javascript", js.Minify)
 
 	fs := http.FileServer(http.Dir("static/"))
 	http.Handle("/static/", m.Middleware(http.StripPrefix("/static/", fs)))
