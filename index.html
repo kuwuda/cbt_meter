@@ -4,19 +4,8 @@
 		<title>CBT Meter</title>
 		<meta charset="UTF-8">
 		<link rel="shortcut icon" href="/static/favicon.png">
+		<link rel="stylesheet" href="/static/index.css">
 		<script src="./static/index.js"></script>
-		<style>
-			#turnMeter {
-				background-color:  grey;
-				display: flex;
-				text-align: center;
-				color: #f0f0f0;
-			}
-			#turnForeground {
-				background-color: green;
-				width: 0%;
-			}
-		</style>
 		<script>
 			{{ if not . }}
 			var logged = false;
@@ -27,67 +16,79 @@
 		</script>
 	</head>
 	<body>
-		<div id="statusBar">&nbsp;</div>
-		{{ if . }}
-		<input type="button" name="start" id="timer" onClick="paused=false; timer();" value="Run Timers"></input>
-		<input type="button" name="reset" id="reset" onClick="reset();" value="Reset"></button>
-		<h1>Player Visible</h1>
-		{{ end }}
-		<table id="visible">
-			<tr>
-				<th>Meter</th>
-				<th>Name</th>
-				<th>AP Gain</th>
-				<th>Current AP</th>
+		<div class="container">
+			<header>
+				<a href="/" class="logo">CBT Meter</a>
+				<span id="statusBar">&nbsp;</span>
+				<nav>
+					<a href="https://github.com/YoureWaifuABest/cbt_meter">Source</a>
+					{{ if not . }}
+					<details>
+						<summary>Log-in</summary>
+						<form id="login">
+							<input type="text"     name="Username" placeholder="Username">
+							<input type="password" name="Password" placeholder="Password">
+							<input type="submit"   value="Log-in">
+						</form>
+					</details>
+					{{ end }}
+					{{ if . }}
+					<a href="/logout">Log-out</a>
+					{{ end }}
+				</nav>
+			</header>
+			<main>
 				{{ if . }}
-				<th>Options</th>
+				<div>
+					<input type="button" name="start" id="timer" onClick="paused=false; timer();" value="Run Timers"></input>
+					<input type="button" name="reset" id="reset" onClick="reset();" value="Reset"></button>
+				</div>
+				<h1>Player Visible</h1>
 				{{ end }}
-			</tr>
-		</table>
-		{{ if . }}
-		<h1>GM Only</h1>
-		{{ end }}
-		<table id="invisible">
-			{{ if . }}
-			<tr>
-				<th>Meter</th>
-				<th>Name</th>
-				<th>AP Gain</th>
-				<th>Current AP</th>
-				<th>Options</th>
-			</tr>
-			{{ end }}
-		</table>
-		{{ if . }}
-		<form id="turnMeterForm">
-			<input type="text" name="maxTime" placeholder="Time">
-			<input type="submit" value="Start Meter">
-		</form>
-		{{ end }}
-		<div id="turnMeter">
-			<div id="turnForeground"></div>
+				<table id="visible">
+					<tr>
+						<th>Meter</th>
+						<th>Name</th>
+						<th>AP Gain</th>
+						<th>Current AP</th>
+						{{ if . }}
+						<th>Options</th>
+						{{ end }}
+					</tr>
+				</table>
+				{{ if . }}
+				<h1>GM Only</h1>
+				{{ end }}
+				<table id="invisible">
+					{{ if . }}
+					<tr>
+						<th>Meter</th>
+						<th>Name</th>
+						<th>AP Gain</th>
+						<th>Current AP</th>
+						<th>Options</th>
+					</tr>
+					{{ end }}
+				</table>
+				{{ if . }}
+				<form id="turnMeterForm">
+					<input type="text" name="maxTime" placeholder="Time">
+					<input type="submit" value="Start Meter">
+				</form>
+				{{ end }}
+				<div id="turnMeter">
+					<div id="turnForeground"></div>
+				</div>
+				{{ if . }}
+				<form id="new">
+					<input type="text" name="name" placeholder="Name">
+					<input type="text" name="gain" placeholder="AP Gain">
+					<input type="text" name="curr" placeholder="Current AP">
+					<input type="checkbox" name="visible" value="true" checked />Visible
+					<input type="submit" placeholder="Create" value="Create">
+				</form>
+				{{ end }}
+			</main>
 		</div>
-		{{ if . }}
-		<form id="new">
-			<input type="text" name="name" placeholder="Name">
-			<input type="text" name="gain" placeholder="AP Gain">
-			<input type="text" name="curr" placeholder="Current AP">
-			<input type="checkbox" name="visible" value="true" checked />Visible
-			<input type="submit" placeholder="Create" value="Create">
-		</form>
-		{{ end }}
-		{{ if not . }}
-		<details>
-			<summary>Log-in</summary>
-			<form id="login">
-				<input type="text"     name="Username" placeholder="Username">
-				<input type="password" name="Password" placeholder="Password">
-				<input type="submit"   value="Log-in">
-			</form>
-		</details>
-		{{ end }}
-		{{ if . }}
-		<a href="/logout">Log-out</a>
-		{{ end }}
 	</body>
 </html>
