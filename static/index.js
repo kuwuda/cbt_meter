@@ -1,10 +1,4 @@
-/* 
- * Will be a global multi-dimensional array
- * This is the most convenient appraoch for this case
- * Values are: name, ap gain, current ap, id
- */
 var paused = true;
-/* Array set-up is: Name, AP Gain, Current AP, ID, visible */ 
 var DataPool = Array();
 var IdPool = Array();
 var TurnMeter;
