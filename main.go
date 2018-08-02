@@ -6,6 +6,9 @@ import (
 	"github.com/go-redis/cache"
 	"github.com/go-redis/redis"
 	"github.com/satori/go.uuid"
+	"github.com/tdewolff/minify"
+	"github.com/tdewolff/minify/css"
+	"github.com/tdewolff/minify/js"
 	"html/template"
 	"log"
 	"net/http"
@@ -181,8 +184,14 @@ func main() {
 	flag.Parse()
 	server := newServer()
 	go server.run()
+
+	m := minify.New()
+	m.AddFunc("text/css", css.Minify)
+	m.AddFunc("text/javascript", js.Minify)
+	m.AddFunc("application/x-javascript", js.Minify)
+
 	fs := http.FileServer(http.Dir("static/"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	http.Handle("/static/", m.Middleware(http.StripPrefix("/static/", fs)))
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)
 	http.HandleFunc("/refresh", refresh)
