@@ -9,6 +9,7 @@ import (
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/js"
+	"golang.org/x/crypto/bcrypt"
 	"html/template"
 	"log"
 	"net/http"
@@ -49,7 +50,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	expectedPassword, err := redisClient.Get(info.Username).Result()
-	if err != nil || expectedPassword != info.Password {
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(expectedPassword), []byte(info.Password))
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
 	}
