@@ -78,16 +78,18 @@ function drawGrid() {
         }
 }
 function timer() {
-        while (!paused && DataPool.length != 0) {
-                for (var i in DataPool) {
-                        if (Number(DataPool[i].Current) >= 100) {
-                                paused = true;
-                        }
-                        DataPool[i].Current += DataPool[i].Gain;
-                }
+	if (!paused && DataPool.length != 0) {
+        	while (!paused && DataPool.length != 0) {
+        	        for (var i in DataPool) {
+        	                if (Number(DataPool[i].Current) >= 100) {
+        	                        paused = true;
+        	                }
+        	                DataPool[i].Current += DataPool[i].Gain;
+        	        }
+        	}
 		sendToBackend();
-                drawGrid();
-        }
+		drawGrid();
+	}
 }
 
 function reset() {
