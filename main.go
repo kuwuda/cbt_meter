@@ -61,11 +61,11 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := uuid.NewV4()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	u := uuid.NewV4()
+	//if err != nil {
+	//	w.WriteHeader(http.StatusInternalServerError)
+	//	return
+	//}
 	sessionToken := u.String()
 
 	codec.Set(&cache.Item{
@@ -129,11 +129,11 @@ func refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := uuid.NewV4()
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
+	u := uuid.NewV4()
+	//if err != nil {
+	//	w.WriteHeader(http.StatusInternalServerError)
+	//	return
+	//}
 	newSessionToken := u.String()
 
 	codec.Set(&cache.Item{
