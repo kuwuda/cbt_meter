@@ -5,7 +5,7 @@ import (
 	"flag"
 	"github.com/go-redis/cache"
 	"github.com/go-redis/redis"
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	"github.com/tdewolff/minify"
 	"github.com/tdewolff/minify/css"
 	"github.com/tdewolff/minify/js"
@@ -61,12 +61,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := uuid.NewV4()
-	//if err != nil {
-	//	w.WriteHeader(http.StatusInternalServerError)
-	//	return
-	//}
-	sessionToken := u.String()
+	sessionToken := uuid.NewString()
 
 	codec.Set(&cache.Item{
 		Key:        sessionToken,
@@ -129,12 +124,7 @@ func refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := uuid.NewV4()
-	//if err != nil {
-	//	w.WriteHeader(http.StatusInternalServerError)
-	//	return
-	//}
-	newSessionToken := u.String()
+	newSessionToken := uuid.NewString()
 
 	codec.Set(&cache.Item{
 		Key:        newSessionToken,
