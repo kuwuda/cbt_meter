@@ -267,8 +267,9 @@ function appendList(currObj) {
 				pteName.value = pte[i].Name;
 
 				var pteTurn = document.createElement("input");
-				pteTurn.type = "text";
-				pteTurn.name = "pteTurn";
+				pteTurn.type  = "text";
+				pteTurn.name  = "pteTurn";
+				pteTurn.classList.add("pteTurn");
 				pteTurn.value = pte[i].Turns;
 
 				var pteId = document.createElement("input");
@@ -279,6 +280,7 @@ function appendList(currObj) {
 				var pteDelete = document.createElement("input");
 				pteDelete.type  = "button";
 				pteDelete.name  = "pteDelete";
+				pteDelete.classList.add("pteDelete");
 				pteDelete.value = "-";
 				pteDelete.onclick = function(){deletePTE(currObj.Id, pte[i])};
 
