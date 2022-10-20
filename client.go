@@ -112,23 +112,21 @@ func (c *Client) readPump() {
 				for {
 					select {
 					case <-ticker.C:
-						go func() {
-							tmRunning = true
-							if data.TurnMeter.Current > 0 {
-								data.TurnMeter.Current--
-							}
-							if data.TurnMeter.Current <= 0 {
-								tmRunning = false
-								close(quit)
-							}
-							message, err = json.Marshal(data)
-							err = redisClient.Set("data", message, 0).Err()
-							if err != nil {
-								log.Printf("%s", err)
-								return
-							}
-							c.server.broadcast <- message
-						}()
+						tmRunning = true
+						if data.TurnMeter.Current > 0 {
+							data.TurnMeter.Current--
+						}
+						if data.TurnMeter.Current <= 0 {
+							tmRunning = false
+							close(quit)
+						}
+						message, err = json.Marshal(data)
+						err = redisClient.Set("data", message, 0).Err()
+						if err != nil {
+							log.Printf("%s", err)
+							return
+						}
+						c.server.broadcast <- message
 					case <-quit:
 						ticker.Stop()
 						return
