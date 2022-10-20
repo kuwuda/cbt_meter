@@ -513,7 +513,7 @@ window.onload = function () {
 	  	}
 	});
 
-	var invisible = document.getElementById("visible");
+	var invisible = document.getElementById("invisible");
 	invisible.addEventListener('change', function(event) {
 		if (event.target.matches('input')) {
 			updateDataPool(event.target);
