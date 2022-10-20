@@ -98,7 +98,6 @@ func (c *Client) readPump() {
 		/* validates as json */
 		var data mContainer
 		err = json.Unmarshal(message, &data)
-
 		if err != nil {
 			/* Lazy error handling for now */
 			log.Printf("%s", err)
