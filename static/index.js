@@ -84,6 +84,14 @@ function timer() {
         	                DataPool[i].Current += DataPool[i].Gain;
         	                if (Number(DataPool[i].Current) >= 100) {
         	                        paused = true;
+					for (var n in DataPool[i].PTE) {
+						var pte = DataPool[i].PTE[n];
+						if (pte.Turns > 0) {
+							pte.Turns--;
+						} else {
+							deletePTE(DataPool[i].Id, pte);
+						}
+					}
         	                }
         	        }
         	}
@@ -92,12 +100,40 @@ function timer() {
 	}
 }
 
+
+
 function reset() {
         if (confirm("Are you sure you want to reset everything?")) {
                 DataPool = [];
 		sendToBackend()
                 drawGrid();
         }
+}
+function newPTE(currObj) {
+	var tempId;
+	if (currObj.PTEIdPool.length > 0) {
+		tempId = currObj.PTEIdPool.pop();
+	} else {
+		tempId = currObj.PTE.length;
+	}
+	currObj.PTE.push({"Name": "Name", "Turns": 1, "Id": tempId});
+	sendToBackend();
+	drawGrid();
+}
+function deletePTE(rowId, pte) {
+	for (var i in DataPool) {
+		if (DataPool[i].Id == rowId) {
+			for (var n in DataPool[i].PTE) {
+				if (DataPool[i].PTE[n].Id == pte.Id) {
+					DataPool[i].PTE.splice(n, 1);
+					DataPool[i].PTEIdPool.push(pte.Id);
+					DataPool[i].PTEIdPool.sort(function(a,b){return b - a});
+				}
+			}
+		}
+	}
+	sendToBackend();
+	drawGrid();
 }
 function deleteRow(currObj) {
 	for (var i in DataPool) {
@@ -155,10 +191,15 @@ function turnMeterDisplay() {
 
 	document.getElementById("turnForeground").textContent = TurnMeter.Current;
 }
+
+/* 
+ * appendList adds the JS data to the html
+ */
 function appendList(currObj) {
         var name = currObj.Name;
         var gain = currObj.Gain;
         var curr = currObj.Current;
+	var pte  = currObj.PTE;
         /*
          * Feels weird creating so many variables just to discard them
          * I don't think there's a better method of doing this though.
@@ -169,6 +210,7 @@ function appendList(currObj) {
         var name_element  = document.createElement("td");
         var gain_element  = document.createElement("td");
         var curr_element  = document.createElement("td");
+	var pte_element   = document.createElement("td");
         var opt_element   = document.createElement("td");
 
         var meter_fg = document.createElement("div");
@@ -189,38 +231,74 @@ function appendList(currObj) {
         meter_element.style.backgroundColor = "grey";
         meter_element.appendChild(meter_fg);
 
-        /* I feel like there's a better way to do this */
+	/*
+	 * if the user is logged in, display editing features
+	 * if not, just display results
+	 */
 	if (logged) {
+		/* name input */
 		var nameInput = document.createElement("input");
 		nameInput.type  = "text";
 		nameInput.name  = "name";
 		nameInput.value = name;
 		name_element.appendChild(nameInput);
-	} else {
-		name_element.textContent = name;
-	}
 
-	if (logged) {
+		/* AP gain input */
 		var gainInput = document.createElement("input");
 		gainInput.type  = "text";
 		gainInput.name  = "gain";
 		gainInput.value = gain;
 		gain_element.appendChild(gainInput);
-	} else {
-		gain_element.textContent = gain;
-	}
 
-	if (logged) {
+		/* current AP input */
 		var currInput = document.createElement("input");
 		currInput.type  = "text";
 		currInput.name  = "curr";
 		currInput.value = curr;
 		curr_element.appendChild(currInput);
-	} else {
-		curr_element.textContent = curr;
-	}
 
-	if (logged) {
+		/* pte array input */
+		if (pte != []) {
+			for (var i in pte) {
+				var pteForm = document.createElement("form");
+				var pteName = document.createElement("input");
+				pteName.type  = "text";
+				pteName.name  = "pteName";
+				pteName.value = pte[i].Name;
+
+				var pteTurn = document.createElement("input");
+				pteTurn.type = "text";
+				pteTurn.name = "pteTurn";
+				pteTurn.value = pte[i].Turns;
+
+				var pteId = document.createElement("input");
+				pteId.type  = "hidden";
+				pteId.name  = "pteId";
+				pteId.value = pte[i].Id;
+
+				var pteDelete = document.createElement("input");
+				pteDelete.type  = "button";
+				pteDelete.name  = "pteDelete";
+				pteDelete.value = "-";
+				pteDelete.onclick = function(){deletePTE(currObj.Id, pte[i])};
+
+				pteForm.appendChild(pteName);
+				pteForm.appendChild(pteTurn);
+				pteForm.appendChild(pteId);
+				pteForm.appendChild(pteDelete);
+				pte_element.appendChild(pteForm);
+			}
+		}
+
+		/* for adding new ptes */
+		var pteNew = document.createElement("input");
+		pteNew.type  = "button";
+		pteNew.name  = "pteNew";
+		pteNew.value = "+";
+		pteNew.onclick = function(){newPTE(currObj)};
+		pte_element.appendChild(pteNew);
+
+		/* all of the options */
 		var hiddInput = document.createElement("input");
 		hiddInput.type  = "hidden";
 		hiddInput.name  = "id";
@@ -261,12 +339,29 @@ function appendList(currObj) {
 		opt_element.appendChild(zero_button);
 		opt_element.appendChild(swap_visible);
 		opt_element.appendChild(rest_button);
+	} else {
+		name_element.textContent = name;
+		gain_element.textContent = gain;
+		curr_element.textContent = curr;
+		if (pte != []) {
+			for (var i in pte) {
+				var pteName = document.createElement("span");
+				pteName.textContent = pte[i].Name + ": ";
+
+				var pteTurn = document.createElement("span");
+				pteTurn.textContent = pte[i].Turns;
+
+				pte_element.appendChild(pteName);
+				pte_element.appendChild(pteTurn);
+			}
+		}
 	}
-        
+	
 	row_element.appendChild(meter_element);
 	row_element.appendChild(name_element);
 	row_element.appendChild(gain_element);
 	row_element.appendChild(curr_element);
+	row_element.appendChild(pte_element);
 	if (logged)
 		row_element.appendChild(opt_element);
 	
@@ -308,10 +403,14 @@ window.onload = function () {
 				tempId = DataPool.length;
 			}
 
+			/* 
+			 * tempobj is our new obj to add to DataPool.
+			 * PTE is a blank array since there isnt an option to add it when creating a new row
+			 */
 			if (arrayList.length == 3) {
-				tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: false}
+				tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], PTE: [], PTEIdPool: [], Id: tempId, Visible: false}
 			} else {
-				tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], Id: tempId, Visible: true} 
+				tempObj = {Name: arrayList[0], Gain: arrayList[1], Current: arrayList[2], PTE: [], PTEIdPool: [], Id: tempId, Visible: true} 
 			}
 
         		DataPool.push(tempObj);
@@ -355,14 +454,50 @@ window.onload = function () {
 	}
 
 
+	/* This is a total mess and I refuse to improve it. maybe one of the worst things i've ever made */
 	function updateDataPool(element) {
-		var siblings = element.parentElement.parentElement.querySelectorAll("input");
-                var id = siblings[3].value;
+		var siblings;
+		if (element.name == "pteName" || element.name == "pteTurn") {
+			siblings = element.parentElement.parentElement.parentElement.querySelectorAll("input");
+		} else {
+			siblings = element.parentElement.parentElement.querySelectorAll("input");
+		}
+		/* iterate through all of our siblings to find the id */
+		var id;
+		for (var i in siblings) {
+			if (siblings[i].name == "id") {
+				id = siblings[i].value;
+			}
+		}
+		/* update DataPool by matching datapool id to sibling id */
                 for (var i in DataPool) {
                         if (DataPool[i].Id == id) {
-                                DataPool[i].Name    = siblings[0].value;
-                                DataPool[i].Gain    = Number(siblings[1].value);
-                                DataPool[i].Current = Number(siblings[2].value);
+				/* ifs so we only update the value that was changed */
+				if (element.name == "name") {
+					DataPool[i].Name = element.value;
+				} else if (element.name == "gain") {
+					DataPool[i].Gain = Number(element.value);
+				} else if (element.name == "curr") {
+					DataPool[i].Current = Number(element.value);
+				} else if (element.name == "pteName" || element.name == "pteTurn") {
+					/* find PTE Id */
+					var pteSiblings = element.parentElement.querySelectorAll("input");
+					var pteId;
+					for (var n in pteSiblings) {
+						if (pteSiblings[n].name == "pteId") {
+							pteId = pteSiblings[n].value;
+						}
+					}
+					for (var n in DataPool[i].PTE) {
+						if (DataPool[i].PTE[n].Id == pteId) {
+							if (element.name == "pteName") {
+								DataPool[i].PTE[n].Name = element.value;
+							} else {
+								DataPool[i].PTE[n].Turns = Number(element.value);
+							}
+						}
+					}
+				}
                         }
                 }
 		sendToBackend();

@@ -26,11 +26,19 @@ type Client struct {
 	auth   bool
 }
 
+type PTE struct {
+	Name string
+	Turns int
+	Id int
+}
+
 /* Used to validate message */
 type Meter struct {
 	Name    string
 	Gain    int
 	Current int
+	PTE     []PTE
+	PTEIdPool []int
 	Id      int
 	Visible bool
 }
